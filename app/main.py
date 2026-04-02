@@ -29,7 +29,7 @@ async def shutdown_db_client():
 
 # ===== Utils =====
 def now_iso() -> str:
-    return dt.datetime.utcnow().isoformat()
+    return dt.datetime.now(dt.timezone.utc).isoformat()
 
 def parse_iso_dt(value: str) -> Optional[str]:
     """Parses flexible ISO8601 dates and returns normalized ISO string."""

@@ -209,6 +209,9 @@ def fetch_events(start_str=None, end_str=None):
              if ts.tzinfo is None:
                  ts = ts.replace(tzinfo=timezone.utc)
              ts = ts.isoformat()
+        elif isinstance(ts, str):
+             if not ts.endswith("Z") and "+" not in ts:
+                 ts += "Z"
         
         doc["timestamp"] = ts
         doc.pop("_id", None)

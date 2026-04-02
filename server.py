@@ -100,6 +100,9 @@ def serialize_event(doc: dict) -> dict:
     ts = data.get("timestamp")
     if isinstance(ts, dt.datetime):
         data["timestamp"] = ts.astimezone(dt.timezone.utc).isoformat()
+    elif isinstance(ts, str):
+        if not ts.endswith("Z") and "+" not in ts:
+            data["timestamp"] = ts + "Z"
     return data
 
 def save_event(ev: dict):
