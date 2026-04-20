@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # App
     APP_NAME: str = "OmniStatus"
+    EXTERNAL_API_KEY: str = ""
     
     # OpenAI
     OPENAI_API_KEY: str = ""

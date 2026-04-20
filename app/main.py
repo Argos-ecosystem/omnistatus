@@ -7,9 +7,11 @@ from app.config import settings
 from app.database import db, get_event_collection, get_victoria_collection
 from app.models import Event
 from app.services.llm import openai_analyze_events
+from app.external import router as ext_router
 
 # ===== App =====
 app = FastAPI(title=settings.APP_NAME)
+app.include_router(ext_router)
 
 app.add_middleware(
     CORSMiddleware,
