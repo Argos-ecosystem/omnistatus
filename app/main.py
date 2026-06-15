@@ -1,3 +1,5 @@
+import asyncio
+import contextlib
 import datetime as dt
 from typing import Optional, List
 from fastapi import FastAPI, Query
@@ -7,6 +9,11 @@ from app.config import settings
 from app.database import db, get_event_collection, get_victoria_collection
 from app.models import Event
 from app.services.llm import openai_analyze_events
+from app.services.complex_analysis import (
+    complex_analysis_cron,
+    load_recent_events,
+    run_complex_analysis,
+)
 from app.external import router as ext_router
 
 # ===== App =====
@@ -21,12 +28,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+complex_analysis_task: Optional[asyncio.Task] = None
+
 @app.on_event("startup")
 async def startup_db_client():
+    global complex_analysis_task
     db.connect()
+    if settings.ENABLE_COMPLEX_ANALYSIS_CRON:
+        complex_analysis_task = asyncio.create_task(complex_analysis_cron())
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    global complex_analysis_task
+    if complex_analysis_task:
+        complex_analysis_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await complex_analysis_task
     db.close()
 
 # ===== Utils =====
@@ -58,11 +75,8 @@ def extract_score(ev: dict) -> Optional[float]:
     return None
 
 async def load_events(hours: int) -> List[dict]:
-    cutoff = dt.datetime.utcnow() - dt.timedelta(hours=max(1, hours))
     try:
-        coll = get_event_collection()
-        cursor = coll.find({"timestamp": {"$gte": cutoff.isoformat()}})
-        return [serialize_event(doc) async for doc in cursor]
+        return await load_recent_events(hours, settings.COMPLEX_ANALYSIS_MAX_EVENTS)
     except Exception as e:
         print(f"⚠ Error loading events: {e}")
         return []
@@ -253,3 +267,8 @@ async def analyze(hours: int = Query(1, ge=1, le=168)):
         "events_count": len(events),
         "window_hours": hours,
     }
+
+
+@app.get("/analysis/complex")
+async def complex_analysis(hours: Optional[int] = Query(None, ge=1, le=168)):
+    return await run_complex_analysis(hours)

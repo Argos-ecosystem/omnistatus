@@ -4,17 +4,54 @@ import httpx
 from typing import List, Dict, Any
 from app.config import settings
 
-async def openai_analyze_events(events: List[Dict[str, Any]]) -> Dict[str, Any]:
-    events_text = "\n".join(
-        f"[{e.get('timestamp')}] {e.get('source')}: {e.get('text')} (score={e.get('score')})"
-        for e in events
-    ) or "(no events)"
+
+def format_event_for_analysis(event: Dict[str, Any]) -> str:
+    count = int(event.get("event_count") or 1)
+    score = event.get("score")
+    avg_score = event.get("avg_score")
+    summary = event.get("summary") or event.get("text") or ""
+    first_seen = event.get("first_seen")
+    last_seen = event.get("last_seen")
+
+    details = [f"count={count}"]
+    if score is not None:
+        details.append(f"score={score}")
+    if avg_score is not None:
+        details.append(f"avg_score={avg_score}")
+    if first_seen and last_seen:
+        details.append(f"seen={first_seen}..{last_seen}")
+
+    samples = event.get("samples") or []
+    samples_text = ""
+    if samples:
+        samples_text = " samples=" + " | ".join(str(sample) for sample in samples[:3])
+
+    return (
+        f"[{event.get('timestamp')}] {event.get('source')}: "
+        f"{summary} ({', '.join(details)}){samples_text}"
+    )
+
+
+async def openai_analyze_events(
+    events: List[Dict[str, Any]],
+    *,
+    model: str | None = None,
+    prompt: str | None = None,
+) -> Dict[str, Any]:
+    seen: set[str] = set()
+    unique_lines: list[str] = []
+    for event in events:
+        line = format_event_for_analysis(event)
+        if line not in seen:
+            seen.add(line)
+            unique_lines.append(line)
+    events_text = "\n".join(unique_lines) or "(no events)"
 
     system_msg = settings.SYSTEM_PROMPT
-    user_msg = f"{settings.PROMPT_ANALYSIS}\n\nEvents:\n{events_text}"
+    user_msg = f"{prompt or settings.PROMPT_ANALYSIS}\n\nEvents:\n{events_text}"
 
     payload = {
-        "model": settings.OPENAI_MODEL,
+        "model": model or settings.OPENAI_MODEL,
         "messages": [
             {"role": "system", "content": system_msg},
             {"role": "user", "content": user_msg},

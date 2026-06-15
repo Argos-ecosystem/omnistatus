@@ -4,12 +4,14 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # App
     APP_NAME: str = "OmniStatus"
+    SERVER_PORT: int = 8001
     EXTERNAL_API_KEY: str = ""
-    
+
     # OpenAI
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4.1"
-    
+    COMPLEX_ANALYSIS_MODEL: str = "gpt-4o-mini"
+
     # MongoDB
     MONGO_URI: str = "mongodb://localhost:27017"
     MONGO_DB_NAME: str = "omnistatus"
@@ -18,18 +20,33 @@ class Settings(BaseSettings):
 
     # Analysis
     SYSTEM_PROMPT: str = (
-        "You are an expert security system. "
+        "You are an operational monitoring assistant. "
+        "Given a list of system events, write a concise summary in Spanish of what happened during the time window. "
+        "Focus on the most relevant activity: volume, patterns, errors, or anything notable. "
         "You must respond EXCLUSIVELY with valid JSON containing keys: "
         "{\"score\": float between 0 and 1, \"text\": string}. "
+        "score=0 means fully normal, score=1 means critical. "
+        "The 'text' field must not exceed 200 characters. "
         "Do not include anything outside the JSON object."
     )
-    PROMPT_ANALYSIS: str = "Analyze events and return JSON {\"score\":float,\"text\":string}."
-    
+    PROMPT_ANALYSIS: str = "Summarize what happened in the events and return JSON {\"score\":float,\"text\":string}. text max 200 chars."
+
     # Alerts
     ALERT_SCORE_THRESHOLD: float = 0.5
     WINDOW_SECONDS: int = 300
     ANALYZE_INTERVAL: int = 300
-    
+    ENABLE_COMPLEX_ANALYSIS_CRON: int = 1
+    COMPLEX_ANALYSIS_LOOKBACK_HOURS: int = 3
+    COMPLEX_ANALYSIS_CRON_HOURS: int = 3
+    COMPLEX_ANALYSIS_SUMMARY_MAX_CHARS: int = 200
+    COMPLEX_ANALYSIS_MAX_EVENTS: int = 500
+    COMPLEX_ANALYSIS_PROMPT: str = (
+        "Summarize what happened during the provided time window based on the events. "
+        "Highlight the most relevant activity, patterns, errors, or anything notable. "
+        "Return JSON with keys score (0=normal, 1=critical) and text. "
+        "text must be a concise summary in Spanish, max 200 characters."
+    )
+
     # Telegram
     ENABLE_TELEGRAM: int = 0
     TELEGRAM_BOT_TOKEN: str = ""

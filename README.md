@@ -67,40 +67,33 @@ omniStatus/
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment
+### 2. Configure Environment (mínimo para uso local)
 
-Create a `.env` file in the project root:
+Crear un archivo `.env` en la raíz del proyecto con lo mínimo necesario:
 
 ```bash
-# Required
-OPENAI_API_KEY=your_openai_api_key_here
-OPENAI_MODEL=gpt-4.1
-PROMPT_ANALYSIS="Analyze the following security events and return a JSON with a risk score (0-1) and a text summary: {score: float, text: string}"
-API_TOKEN=change_me_for_api_access  # Optional but recommended; sent as header X-API-Key
-
-# MongoDB
+# Si solo almacenas eventos localmente en MongoDB y no ejecutas análisis LLM,
+# basta con definir MONGO_URI si no usas el valor por defecto.
 MONGO_URI=mongodb://localhost:27017
-MONGO_DB_NAME=omnistatus
-MONGO_COLL_NAME=events
-MONGO_COLL_VICTORIA=victoria_history
 
-# Analysis Settings
-ALERT_SCORE_THRESHOLD=0.5
-WINDOW_SECONDS=300
-ANALYZE_INTERVAL=300
+# Si vas a usar el análisis con OpenAI, define la clave:
+OPENAI_API_KEY=your_openai_api_key_here
+COMPLEX_ANALYSIS_MODEL=gpt-4o-mini
 
-# Optional: Telegram Notifications
-ENABLE_TELEGRAM=0
+# Análisis complejo automático:
+# Lee N horas hacia atrás, corre cada N horas y limita el resumen a M caracteres.
+ENABLE_COMPLEX_ANALYSIS_CRON=1
+COMPLEX_ANALYSIS_LOOKBACK_HOURS=3
+COMPLEX_ANALYSIS_CRON_HOURS=3
+COMPLEX_ANALYSIS_SUMMARY_MAX_CHARS=1200
+
+# API TOKEN opcional para proteger endpoints (X-API-Key)
+API_TOKEN=change_me_for_api_access
+
+# Envío del resumen por Telegram
+ENABLE_TELEGRAM=1
 TELEGRAM_BOT_TOKEN=your_bot_token
 TELEGRAM_CHAT_ID=your_chat_id
-
-# Optional: Text-to-Speech Alerts
-ENABLE_TTS=0
-TTS_URL=https://api.openai.com/v1/audio/speech
-TTS_MODEL=gpt-4o-mini-tts
-TTS_VOICE=verse
-TTS_OUTPUT=alert.mp3
-TTS_MESSAGE="Security alert detected"
 ```
 
 ### 3. Start MongoDB
@@ -183,6 +176,15 @@ GET /analyze?hours=1
 ```
 
 Returns LLM analysis of events from the last N hours.
+
+### Complex Analysis
+```bash
+GET /analysis/complex?hours=1
+```
+
+Runs the configurable complex analysis manually. It reads MongoDB events from the last `hours`, uses `COMPLEX_ANALYSIS_MODEL` (`gpt-4o-mini` by default), caps the summary with `COMPLEX_ANALYSIS_SUMMARY_MAX_CHARS`, and sends the summary through Telegram when enabled.
+
+OmniStatus also accepts grouped payloads from Sentinex. Repeated detections may include `event_count`, `avg_score`, `first_seen`, `last_seen`, `summary`, `dedup_key`, and `samples`; these fields are stored and used by LLM analysis as repeated observations instead of a single isolated event.
 
 ### Victoria History
 ```bash
@@ -267,6 +269,17 @@ curl http://localhost:8001/analyze?hours=1
 
 ### Analysis Interval
 `ANALYZE_INTERVAL=300` - How often (in seconds) the consumer runs analysis. Default is 5 minutes.
+
+### Complex Analysis Cron
+`ENABLE_COMPLEX_ANALYSIS_CRON=1` enables the background cron inside the API process.
+
+`COMPLEX_ANALYSIS_LOOKBACK_HOURS=1` controls how many hours back are read from MongoDB.
+
+`COMPLEX_ANALYSIS_CRON_HOURS=1` controls how often the cron runs.
+
+`COMPLEX_ANALYSIS_SUMMARY_MAX_CHARS=1200` limits the outgoing summary length.
+
+`COMPLEX_ANALYSIS_MODEL=gpt-4o-mini` selects the OpenAI model used for this deeper analysis.
 
 ### LLM Prompt
 Customize `PROMPT_ANALYSIS` to adjust how events are analyzed. The prompt should instruct the LLM to return JSON with `score` and `text` fields.
