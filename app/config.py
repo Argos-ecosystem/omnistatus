@@ -20,17 +20,31 @@ class Settings(BaseSettings):
 
     # Analysis
     SYSTEM_PROMPT: str = (
-        "You are a video surveillance monitoring assistant. "
-        "You analyze detection events from security cameras (people, vehicles, objects, motion, intrusions). "
-        "Given a list of camera events, write a concise summary in Spanish of what happened during the time window. "
-        "Focus on: number of detections, unusual activity, recurring patterns, potential threats, or anything notable. "
+        "You are a monitoring assistant for a plant nursery (vivero). "
+        "The events you receive are text descriptions of images captured by surveillance cameras at the nursery. "
+        "Each event describes what the camera detected: people, vehicles, activity in crop/plant areas, access points, warehouses, etc. "
+        "Your job is to analyze those descriptions and answer the user's query as precisely as possible. "
         "You must respond EXCLUSIVELY with valid JSON containing keys: "
         "{\"score\": float between 0 and 1, \"text\": string}. "
-        "score=0 means fully normal (no activity or routine), score=1 means critical (intrusion, threat, unusual activity). "
+        "score=0 means fully normal, score=1 means critical (intrusion, fire, theft, damage). "
+        "The 'text' field must not exceed 200 characters and must be in Spanish. "
+        "Do not include anything outside the JSON object."
+    )
+    PROMPT_ANALYSIS: str = "Analiza las descripciones de imágenes del vivero y responde en JSON {\"score\":float,\"text\":string}. text max 200 chars."
+
+    # Victoria (external system)
+    VICTORIA_SYSTEM_PROMPT: str = (
+        "You are a monitoring assistant for an external integrated system called Victoria. "
+        "Victoria is an external data source that sends events, alerts, and status updates from its own platform. "
+        "Given a list of Victoria events, write a concise summary in Spanish of what happened during the time window. "
+        "Focus on: alert volume, error states, status changes, anomalies, or anything that deviates from normal operation. "
+        "You must respond EXCLUSIVELY with valid JSON containing keys: "
+        "{\"score\": float between 0 and 1, \"text\": string}. "
+        "score=0 means fully normal, score=1 means critical (error, outage, or major anomaly). "
         "The 'text' field must not exceed 200 characters. "
         "Do not include anything outside the JSON object."
     )
-    PROMPT_ANALYSIS: str = "Summarize the camera detections and return JSON {\"score\":float,\"text\":string}. text max 200 chars."
+    VICTORIA_ANALYSIS_PROMPT: str = "Summarize the Victoria external system events and return JSON {\"score\":float,\"text\":string}. text max 200 chars."
 
     # Alerts
     ALERT_SCORE_THRESHOLD: float = 0.5
@@ -42,11 +56,12 @@ class Settings(BaseSettings):
     COMPLEX_ANALYSIS_SUMMARY_MAX_CHARS: int = 200
     COMPLEX_ANALYSIS_MAX_EVENTS: int = 500
     COMPLEX_ANALYSIS_PROMPT: str = (
-        "You are analyzing video surveillance camera detections for the provided time window. "
-        "Summarize what was detected: people, vehicles, motion, objects, or any suspicious activity. "
-        "Highlight the most relevant detections, recurring patterns, and anything that could indicate a threat or intrusion. "
-        "Return JSON with keys score (0=normal/routine, 1=critical/threat) and text. "
-        "text must be a concise summary in Spanish, max 200 characters."
+        "You are analyzing image descriptions from surveillance cameras at a plant nursery (vivero). "
+        "Summarize what the cameras detected during the time window: people, vehicles, activity in crop/plant areas, access points, etc. "
+        "Always describe what happened even if everything was calm — mention the type of activity, approximate frequency, and areas involved. "
+        "Highlight any unusual detections, recurring patterns, or anything that could indicate a threat, intrusion, or damage. "
+        "Return JSON with keys score (0=calm/routine, 1=critical/threat) and text. "
+        "text must be a descriptive summary in Spanish, max 200 characters."
     )
 
     # Telegram

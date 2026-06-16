@@ -37,6 +37,7 @@ async def openai_analyze_events(
     *,
     model: str | None = None,
     prompt: str | None = None,
+    system_prompt: str | None = None,
 ) -> Dict[str, Any]:
     seen: set[str] = set()
     unique_lines: list[str] = []
@@ -47,7 +48,7 @@ async def openai_analyze_events(
             unique_lines.append(line)
     events_text = "\n".join(unique_lines) or "(no events)"
 
-    system_msg = settings.SYSTEM_PROMPT
+    system_msg = system_prompt or settings.SYSTEM_PROMPT
     user_msg = f"{prompt or settings.PROMPT_ANALYSIS}\n\nEvents:\n{events_text}"
 
     payload = {

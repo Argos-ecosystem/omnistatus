@@ -62,8 +62,14 @@ async def load_recent_events(hours: int, limit: int) -> list[dict]:
 
 def format_complex_analysis_message(result: dict, events_count: int, hours: int) -> str:
     score = float(result.get("score", 0.0))
-    summary = result.get("text") or "Sin resumen."
-    return f"OmniStatus {hours}h | score {score:.2f}\n{summary}"
+    summary = result.get("text") or "Sin actividad registrada."
+    if score < 0.3:
+        estado = "Todo tranquilo"
+    elif score < 0.6:
+        estado = "Actividad moderada"
+    else:
+        estado = "ALERTA"
+    return f"🌿 Vivero | {hours}h | {estado} ({score:.2f})\nEventos: {events_count}\n{summary}"
 
 
 def total_observed_events(events: list[dict]) -> int:
