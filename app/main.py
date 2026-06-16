@@ -3,6 +3,7 @@ import contextlib
 import datetime as dt
 from typing import Optional, List
 from fastapi import FastAPI, Query
+from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
@@ -274,31 +275,33 @@ async def complex_analysis(hours: Optional[int] = Query(None, ge=1, le=168)):
     return await run_complex_analysis(hours)
 
 
-@app.get("/analyze/custom")
-async def analyze_custom(
-    hours: int = Query(..., ge=1, le=168),
-    prompt: str = Query(..., min_length=1),
-):
-    events = await load_recent_events(hours, settings.COMPLEX_ANALYSIS_MAX_EVENTS)
+class AnalyzeRequest(BaseModel):
+    hours: int = Field(..., ge=1, le=168)
+    prompt: str = Field(..., min_length=1)
+
+
+@app.post("/analyze/custom")
+async def analyze_custom(body: AnalyzeRequest):
+    events = await load_recent_events(body.hours, settings.COMPLEX_ANALYSIS_MAX_EVENTS)
     if not events:
         return {
             "status": "no_events",
             "score": 0.0,
             "msg": "No hay eventos en ese período.",
             "events_count": 0,
-            "window_hours": hours,
+            "window_hours": body.hours,
         }
 
     result = await openai_analyze_events(
         events,
         model=settings.COMPLEX_ANALYSIS_MODEL,
-        prompt=prompt,
+        prompt=body.prompt,
     )
     return {
         "status": "ok",
         "score": float(result.get("score", 0.0)),
         "msg": result.get("text", "No summary"),
         "events_count": len(events),
-        "window_hours": hours,
+        "window_hours": body.hours,
         "model": settings.COMPLEX_ANALYSIS_MODEL,
     }
