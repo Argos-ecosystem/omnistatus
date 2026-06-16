@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4.1"
-    COMPLEX_ANALYSIS_MODEL: str = "gpt-4o-mini"
+    COMPLEX_ANALYSIS_MODEL: str = "gpt-4.1"
 
     # MongoDB
     MONGO_URI: str = "mongodb://localhost:27017"
