@@ -293,10 +293,11 @@ async def analyze_custom(body: AnalyzeRequest):
             "window_hours": body.hours,
         }
 
+    full_prompt = f"{body.prompt}\nThe 'text' field must not exceed {settings.CUSTOM_ANALYSIS_SUMMARY_MAX_CHARS} characters."
     result = await openai_analyze_events(
         events,
         model=body.model or settings.OPENAI_MODEL,
-        prompt=body.prompt,
+        prompt=full_prompt,
     )
     return {
         "status": "ok",

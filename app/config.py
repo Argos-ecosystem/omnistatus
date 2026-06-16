@@ -54,6 +54,7 @@ class Settings(BaseSettings):
     COMPLEX_ANALYSIS_LOOKBACK_HOURS: int = 3
     COMPLEX_ANALYSIS_CRON_HOURS: int = 3
     COMPLEX_ANALYSIS_SUMMARY_MAX_CHARS: int = 200
+    CUSTOM_ANALYSIS_SUMMARY_MAX_CHARS: int = 200
     COMPLEX_ANALYSIS_MAX_EVENTS: int = 500
     COMPLEX_ANALYSIS_PROMPT: str = (
         "You are analyzing image descriptions from surveillance cameras at a plant nursery (vivero). "
