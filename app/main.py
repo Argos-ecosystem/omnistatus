@@ -274,66 +274,31 @@ async def complex_analysis(hours: Optional[int] = Query(None, ge=1, le=168)):
     return await run_complex_analysis(hours)
 
 
-@app.get("/analyze/victoria")
-async def analyze_victoria(
-    hours: int = Query(..., ge=1, le=168, description="Horas hacia atrás a analizar"),
-    prompt: str = Query(..., min_length=1, description="Consulta/prompt del usuario"),
-):
-    cutoff = dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=hours)
-    cutoff_iso = cutoff.isoformat()
-    mongo_filter = {
-        "$or": [
-            {"timestamp": {"$gte": cutoff}},
-            {"timestamp": {"$gte": cutoff_iso}},
-        ]
-    }
-    try:
-        cursor = (
-            get_victoria_collection()
-            .find(mongo_filter, sort=[("timestamp", -1)])
-            .limit(settings.COMPLEX_ANALYSIS_MAX_EVENTS)
-        )
-        events = [serialize_event(doc) async for doc in cursor]
-    except Exception as e:
-        return {"status": "error", "msg": str(e)}
-
-    if not events:
-        return {
-            "status": "no_events",
-            "score": 0.0,
-            "msg": "No hay eventos de Victoria en ese período.",
-            "events_count": 0,
-            "window_hours": hours,
-        }
-
-    full_prompt = f"{prompt}\nThe 'text' field must not exceed 100 characters."
-    result = await openai_analyze_events(
-        events,
-        model=settings.COMPLEX_ANALYSIS_MODEL,
-        prompt=full_prompt,
-        system_prompt=settings.VICTORIA_SYSTEM_PROMPT,
-    )
-    return {
-        "status": "ok",
-        "score": float(result.get("score", 0.0)),
-        "msg": result.get("text", "No summary"),
-        "events_count": len(events),
-        "window_hours": hours,
-        "model": settings.COMPLEX_ANALYSIS_MODEL,
-    }
-
-
 @app.get("/analyze/custom")
 async def analyze_custom(
-    hours: int = Query(..., ge=1, le=168, description="Horas hacia atrás a analizar"),
-    prompt: str = Query(..., min_length=1, description="Prompt personalizado para el análisis"),
+    hours: int = Query(..., ge=1, le=168),
+    prompt: str = Query(..., min_length=1),
+    collection: str = Query("events", regex="^(events|victoria)$"),
 ):
-    events = await load_recent_events(hours, settings.COMPLEX_ANALYSIS_MAX_EVENTS)
+    if collection == "victoria":
+        cutoff = dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=hours)
+        cutoff_iso = cutoff.isoformat()
+        mongo_filter = {"$or": [{"timestamp": {"$gte": cutoff}}, {"timestamp": {"$gte": cutoff_iso}}]}
+        try:
+            cursor = get_victoria_collection().find(mongo_filter, sort=[("timestamp", -1)]).limit(settings.COMPLEX_ANALYSIS_MAX_EVENTS)
+            events = [serialize_event(doc) async for doc in cursor]
+        except Exception as e:
+            return {"status": "error", "msg": str(e)}
+        sys_prompt = settings.VICTORIA_SYSTEM_PROMPT
+    else:
+        events = await load_recent_events(hours, settings.COMPLEX_ANALYSIS_MAX_EVENTS)
+        sys_prompt = None
+
     if not events:
         return {
             "status": "no_events",
             "score": 0.0,
-            "msg": "No recent events.",
+            "msg": "No hay eventos en ese período.",
             "events_count": 0,
             "window_hours": hours,
         }
@@ -343,6 +308,7 @@ async def analyze_custom(
         events,
         model=settings.COMPLEX_ANALYSIS_MODEL,
         prompt=full_prompt,
+        system_prompt=sys_prompt,
     )
     return {
         "status": "ok",
