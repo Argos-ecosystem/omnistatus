@@ -278,6 +278,7 @@ async def complex_analysis(hours: Optional[int] = Query(None, ge=1, le=168)):
 class AnalyzeRequest(BaseModel):
     hours: int = Field(..., ge=1, le=168)
     prompt: str = Field(..., min_length=1)
+    model: Optional[str] = None  # default: OPENAI_MODEL (gpt-4.1)
 
 
 @app.post("/analyze/custom")
@@ -294,7 +295,7 @@ async def analyze_custom(body: AnalyzeRequest):
 
     result = await openai_analyze_events(
         events,
-        model=settings.COMPLEX_ANALYSIS_MODEL,
+        model=body.model or settings.OPENAI_MODEL,
         prompt=body.prompt,
     )
     return {
@@ -303,5 +304,5 @@ async def analyze_custom(body: AnalyzeRequest):
         "msg": result.get("text", "No summary"),
         "events_count": len(events),
         "window_hours": body.hours,
-        "model": settings.COMPLEX_ANALYSIS_MODEL,
+        "model": body.model or settings.OPENAI_MODEL,
     }
