@@ -278,22 +278,8 @@ async def complex_analysis(hours: Optional[int] = Query(None, ge=1, le=168)):
 async def analyze_custom(
     hours: int = Query(..., ge=1, le=168),
     prompt: str = Query(..., min_length=1),
-    collection: str = Query("events", regex="^(events|victoria)$"),
 ):
-    if collection == "victoria":
-        cutoff = dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=hours)
-        cutoff_iso = cutoff.isoformat()
-        mongo_filter = {"$or": [{"timestamp": {"$gte": cutoff}}, {"timestamp": {"$gte": cutoff_iso}}]}
-        try:
-            cursor = get_victoria_collection().find(mongo_filter, sort=[("timestamp", -1)]).limit(settings.COMPLEX_ANALYSIS_MAX_EVENTS)
-            events = [serialize_event(doc) async for doc in cursor]
-        except Exception as e:
-            return {"status": "error", "msg": str(e)}
-        sys_prompt = settings.VICTORIA_SYSTEM_PROMPT
-    else:
-        events = await load_recent_events(hours, settings.COMPLEX_ANALYSIS_MAX_EVENTS)
-        sys_prompt = None
-
+    events = await load_recent_events(hours, settings.COMPLEX_ANALYSIS_MAX_EVENTS)
     if not events:
         return {
             "status": "no_events",
@@ -303,12 +289,10 @@ async def analyze_custom(
             "window_hours": hours,
         }
 
-    full_prompt = f"{prompt}\nThe 'text' field must not exceed 100 characters."
     result = await openai_analyze_events(
         events,
         model=settings.COMPLEX_ANALYSIS_MODEL,
-        prompt=full_prompt,
-        system_prompt=sys_prompt,
+        prompt=prompt,
     )
     return {
         "status": "ok",

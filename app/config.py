@@ -58,10 +58,11 @@ class Settings(BaseSettings):
     COMPLEX_ANALYSIS_PROMPT: str = (
         "You are analyzing image descriptions from surveillance cameras at a plant nursery (vivero). "
         "Summarize what the cameras detected during the time window: people, vehicles, activity in crop/plant areas, access points, etc. "
-        "Always describe what happened even if everything was calm — mention the type of activity, approximate frequency, and areas involved. "
+        "You MUST always describe what actually happened — never say 'nothing happened' or 'no activity'. "
+        "If activity was low, describe what little was detected: how many detections, where, at what times. "
         "Highlight any unusual detections, recurring patterns, or anything that could indicate a threat, intrusion, or damage. "
         "Return JSON with keys score (0=calm/routine, 1=critical/threat) and text. "
-        "text must be a descriptive summary in Spanish, max 200 characters."
+        "text must be a descriptive summary in Spanish."
     )
 
     # Telegram
