@@ -272,3 +272,34 @@ async def analyze(hours: int = Query(1, ge=1, le=168)):
 @app.get("/analysis/complex")
 async def complex_analysis(hours: Optional[int] = Query(None, ge=1, le=168)):
     return await run_complex_analysis(hours)
+
+
+@app.get("/analyze/custom")
+async def analyze_custom(
+    hours: int = Query(..., ge=1, le=168, description="Horas hacia atrás a analizar"),
+    prompt: str = Query(..., min_length=1, description="Prompt personalizado para el análisis"),
+):
+    events = await load_recent_events(hours, settings.COMPLEX_ANALYSIS_MAX_EVENTS)
+    if not events:
+        return {
+            "status": "no_events",
+            "score": 0.0,
+            "msg": "No recent events.",
+            "events_count": 0,
+            "window_hours": hours,
+        }
+
+    full_prompt = f"{prompt}\nThe 'text' field must not exceed 100 characters."
+    result = await openai_analyze_events(
+        events,
+        model=settings.COMPLEX_ANALYSIS_MODEL,
+        prompt=full_prompt,
+    )
+    return {
+        "status": "ok",
+        "score": float(result.get("score", 0.0)),
+        "msg": result.get("text", "No summary"),
+        "events_count": len(events),
+        "window_hours": hours,
+        "model": settings.COMPLEX_ANALYSIS_MODEL,
+    }
