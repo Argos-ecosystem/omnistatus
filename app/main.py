@@ -295,7 +295,6 @@ async def analyze_custom(body: AnalyzeRequest):
 
     full_prompt = (
         f"{body.prompt}\n"
-        f"Analyze ONLY events from the last {body.hours} hours. Do not infer activity outside this window.\n"
         f"The 'text' field must not exceed {settings.CUSTOM_ANALYSIS_SUMMARY_MAX_CHARS} characters."
     )
     result = await openai_analyze_events(
