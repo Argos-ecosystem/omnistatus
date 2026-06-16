@@ -20,16 +20,17 @@ class Settings(BaseSettings):
 
     # Analysis
     SYSTEM_PROMPT: str = (
-        "You are an operational monitoring assistant. "
-        "Given a list of system events, write a concise summary in Spanish of what happened during the time window. "
-        "Focus on the most relevant activity: volume, patterns, errors, or anything notable. "
+        "You are a video surveillance monitoring assistant. "
+        "You analyze detection events from security cameras (people, vehicles, objects, motion, intrusions). "
+        "Given a list of camera events, write a concise summary in Spanish of what happened during the time window. "
+        "Focus on: number of detections, unusual activity, recurring patterns, potential threats, or anything notable. "
         "You must respond EXCLUSIVELY with valid JSON containing keys: "
         "{\"score\": float between 0 and 1, \"text\": string}. "
-        "score=0 means fully normal, score=1 means critical. "
+        "score=0 means fully normal (no activity or routine), score=1 means critical (intrusion, threat, unusual activity). "
         "The 'text' field must not exceed 200 characters. "
         "Do not include anything outside the JSON object."
     )
-    PROMPT_ANALYSIS: str = "Summarize what happened in the events and return JSON {\"score\":float,\"text\":string}. text max 200 chars."
+    PROMPT_ANALYSIS: str = "Summarize the camera detections and return JSON {\"score\":float,\"text\":string}. text max 200 chars."
 
     # Alerts
     ALERT_SCORE_THRESHOLD: float = 0.5
@@ -41,9 +42,10 @@ class Settings(BaseSettings):
     COMPLEX_ANALYSIS_SUMMARY_MAX_CHARS: int = 200
     COMPLEX_ANALYSIS_MAX_EVENTS: int = 500
     COMPLEX_ANALYSIS_PROMPT: str = (
-        "Summarize what happened during the provided time window based on the events. "
-        "Highlight the most relevant activity, patterns, errors, or anything notable. "
-        "Return JSON with keys score (0=normal, 1=critical) and text. "
+        "You are analyzing video surveillance camera detections for the provided time window. "
+        "Summarize what was detected: people, vehicles, motion, objects, or any suspicious activity. "
+        "Highlight the most relevant detections, recurring patterns, and anything that could indicate a threat or intrusion. "
+        "Return JSON with keys score (0=normal/routine, 1=critical/threat) and text. "
         "text must be a concise summary in Spanish, max 200 characters."
     )
 
