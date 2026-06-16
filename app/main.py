@@ -276,7 +276,7 @@ async def complex_analysis(hours: Optional[int] = Query(None, ge=1, le=168)):
 
 
 class AnalyzeRequest(BaseModel):
-    hours: int = Field(12, ge=1, le=168)
+    hours: int = Field(..., ge=1, le=168)
     prompt: str = Field(..., min_length=1)
     model: Optional[str] = None
 
