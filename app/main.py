@@ -276,9 +276,9 @@ async def complex_analysis(hours: Optional[int] = Query(None, ge=1, le=168)):
 
 
 class AnalyzeRequest(BaseModel):
-    hours: int = Field(..., ge=1, le=168)
+    hours: int = Field(12, ge=1, le=168)
     prompt: str = Field(..., min_length=1)
-    model: Optional[str] = None  # default: OPENAI_MODEL (gpt-4.1)
+    model: Optional[str] = None
 
 
 @app.post("/analyze/custom")
@@ -293,7 +293,11 @@ async def analyze_custom(body: AnalyzeRequest):
             "window_hours": body.hours,
         }
 
-    full_prompt = f"{body.prompt}\nThe 'text' field must not exceed {settings.CUSTOM_ANALYSIS_SUMMARY_MAX_CHARS} characters."
+    full_prompt = (
+        f"{body.prompt}\n"
+        f"Analyze ONLY events from the last {body.hours} hours. Do not infer activity outside this window.\n"
+        f"The 'text' field must not exceed {settings.CUSTOM_ANALYSIS_SUMMARY_MAX_CHARS} characters."
+    )
     result = await openai_analyze_events(
         events,
         model=body.model or settings.OPENAI_MODEL,
