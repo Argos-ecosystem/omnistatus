@@ -9,8 +9,8 @@ class Settings(BaseSettings):
 
     # OpenAI
     OPENAI_API_KEY: str = ""
-    OPENAI_MODEL: str = "gpt-4.1-mini"
-    COMPLEX_ANALYSIS_MODEL: str = "gpt-4.1-mini"
+    OPENAI_MODEL: str = "gpt-5"
+    COMPLEX_ANALYSIS_MODEL: str = "gpt-5"
 
     # MongoDB
     MONGO_URI: str = "mongodb://localhost:27017"
@@ -72,14 +72,6 @@ class Settings(BaseSettings):
     TELEGRAM_BOT_TOKEN: str = ""
     TELEGRAM_CHAT_ID: str = ""
     
-    # TTS
-    ENABLE_TTS: int = 0
-    TTS_URL: str = "https://api.openai.com/v1/audio/speech"
-    TTS_MODEL: str = "gpt-4o-mini-tts"
-    TTS_VOICE: str = "verse"
-    TTS_OUTPUT: str = "alerta.mp3"
-    TTS_MESSAGE: str = "Security alert detected"
-
     class Config:
         env_file = ".env"
         extra = "ignore"
