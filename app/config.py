@@ -1,4 +1,3 @@
-import os
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
@@ -9,8 +8,8 @@ class Settings(BaseSettings):
 
     # OpenAI
     OPENAI_API_KEY: str = ""
-    OPENAI_MODEL: str = "gpt-5"
-    COMPLEX_ANALYSIS_MODEL: str = "gpt-5"
+    OPENAI_MODEL: str = "gpt-4.1-mini"
+    COMPLEX_ANALYSIS_MODEL: str = "gpt-4.1-mini"
 
     # MongoDB
     MONGO_URI: str = "mongodb://localhost:27017"

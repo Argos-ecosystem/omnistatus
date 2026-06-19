@@ -19,6 +19,19 @@ from app.services.complex_analysis import (
 from app.external import router as ext_router
 
 
+async def _startup_analysis() -> None:
+    try:
+        result = await run_complex_analysis()
+        print(
+            "Startup analysis:",
+            result.get("status"),
+            f"events={result.get('events_count')}",
+            f"sent={result.get('notification', {}).get('sent')}",
+        )
+    except Exception as exc:
+        print(f"Startup analysis error: {exc}")
+
+
 # ===== Lifespan =====
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -27,6 +40,7 @@ async def lifespan(app: FastAPI):
     await get_victoria_collection().create_index([("timestamp", -1)])
     task = None
     if settings.ENABLE_COMPLEX_ANALYSIS_CRON:
+        asyncio.create_task(_startup_analysis())
         task = asyncio.create_task(complex_analysis_cron())
     yield
     if task:
