@@ -237,7 +237,7 @@ async def ext_status(
     hours: int = Query(1, ge=1, le=24),
 ):
     """Quick system status: event count and average score over the last N hours."""
-    cutoff = dt.datetime.utcnow() - dt.timedelta(hours=hours)
+    cutoff = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) - dt.timedelta(hours=hours)
     try:
         coll = get_event_collection()
         cursor = coll.find({"timestamp": {"$gte": cutoff.isoformat()}})

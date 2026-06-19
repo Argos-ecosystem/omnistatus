@@ -90,16 +90,17 @@ async def openai_analyze_events(
             {"role": "user", "content": user_msg},
         ],
         "temperature": 0,
+        "max_tokens": 200,
         "response_format": {"type": "json_object"},
     }
-    
+
     headers = {
         "Authorization": f"Bearer {settings.OPENAI_API_KEY}",
         "Content-Type": "application/json",
     }
 
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=15.0) as client:
             r = await client.post(
                 "https://api.openai.com/v1/chat/completions",
                 headers=headers,

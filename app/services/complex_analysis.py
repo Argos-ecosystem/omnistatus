@@ -69,7 +69,7 @@ def format_complex_analysis_message(result: dict, events_count: int, hours: int)
         estado = "Actividad moderada"
     else:
         estado = "ALERTA"
-    return f"🌿 Vivero | {hours}h | {estado} ({score:.2f})\nEventos: {events_count}\n{summary}"
+    return f"🌿 {settings.APP_NAME} | {hours}h | {estado} ({score:.2f})\nEventos: {events_count}\n{summary}"
 
 
 def total_observed_events(events: list[dict]) -> int:
@@ -141,15 +141,3 @@ async def complex_analysis_cron() -> None:
         await asyncio.sleep(interval_seconds)
 
 
-async def run_complex_analysis_on_startup() -> None:
-    """Runs one analysis immediately at startup before the periodic cron begins."""
-    try:
-        result = await run_complex_analysis()
-        print(
-            "Startup analysis:",
-            result.get("status"),
-            f"events={result.get('events_count')}",
-            f"sent={result.get('notification', {}).get('sent')}",
-        )
-    except Exception as exc:
-        print(f"Startup analysis error: {exc}")

@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import datetime as dt
+from contextlib import asynccontextmanager
 from typing import Optional, List
 from fastapi import FastAPI, Query
 from pydantic import BaseModel, Field
@@ -17,8 +18,26 @@ from app.services.complex_analysis import (
 )
 from app.external import router as ext_router
 
+
+# ===== Lifespan =====
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    db.connect()
+    await get_event_collection().create_index([("timestamp", -1)])
+    await get_victoria_collection().create_index([("timestamp", -1)])
+    task = None
+    if settings.ENABLE_COMPLEX_ANALYSIS_CRON:
+        task = asyncio.create_task(complex_analysis_cron())
+    yield
+    if task:
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
+    db.close()
+
+
 # ===== App =====
-app = FastAPI(title=settings.APP_NAME)
+app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
 app.include_router(ext_router)
 
 app.add_middleware(
@@ -28,24 +47,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-complex_analysis_task: Optional[asyncio.Task] = None
-
-@app.on_event("startup")
-async def startup_db_client():
-    global complex_analysis_task
-    db.connect()
-    if settings.ENABLE_COMPLEX_ANALYSIS_CRON:
-        complex_analysis_task = asyncio.create_task(complex_analysis_cron())
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    global complex_analysis_task
-    if complex_analysis_task:
-        complex_analysis_task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await complex_analysis_task
-    db.close()
 
 # ===== Utils =====
 def now_iso() -> str:
