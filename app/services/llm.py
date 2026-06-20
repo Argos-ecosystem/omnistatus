@@ -1,5 +1,6 @@
 import json
 import re
+import datetime as dt
 import httpx
 from typing import List, Dict, Any
 from app.config import settings
@@ -80,8 +81,16 @@ async def openai_analyze_events(
     aggregated = _aggregate_events(events)
     events_text = "\n".join(format_event_for_analysis(e) for e in aggregated) or "(no events)"
 
+    now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
     system_msg = system_prompt or settings.SYSTEM_PROMPT
-    user_msg = f"{prompt or settings.PROMPT_ANALYSIS}\n\nEvents:\n{events_text}"
+    user_msg = (
+        f"Fecha y hora actual: {now}\n"
+        "NOTA: Los timestamps visibles en las imágenes de cámara pueden ser incorrectos "
+        "(relojes descalibrados). Usa la fecha y hora indicada arriba como referencia real.\n\n"
+        f"{prompt or settings.PROMPT_ANALYSIS}\n\n"
+        f"Events:\n{events_text}"
+    )
 
     payload = {
         "model": model or settings.OPENAI_MODEL,
