@@ -78,8 +78,8 @@ Create a `.env` file in the project root (minimum required):
 
 ```bash
 OPENAI_API_KEY=your_openai_api_key_here
-OPENAI_MODEL=gpt-5
-COMPLEX_ANALYSIS_MODEL=gpt-5
+OPENAI_MODEL=gpt-4.1-mini
+COMPLEX_ANALYSIS_MODEL=gpt-4.1-mini
 
 MONGO_URI=mongodb://localhost:27017
 
@@ -169,8 +169,8 @@ The built-in cron reads the last `COMPLEX_ANALYSIS_LOOKBACK_HOURS` of events, se
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `OPENAI_API_KEY` | — | Required. OpenAI API key |
-| `OPENAI_MODEL` | `gpt-5` | Model for `/analyze` and custom analysis |
-| `COMPLEX_ANALYSIS_MODEL` | `gpt-5` | Model for the periodic cron |
+| `OPENAI_MODEL` | `gpt-4.1-mini` | Model for `/analyze` and custom analysis |
+| `COMPLEX_ANALYSIS_MODEL` | `gpt-4.1-mini` | Model for the periodic cron |
 | `MONGO_URI` | `mongodb://localhost:27017` | MongoDB connection string |
 | `MONGO_DB_NAME` | `omnistatus` | Database name |
 | `ENABLE_COMPLEX_ANALYSIS_CRON` | `1` | Enable/disable background cron |
